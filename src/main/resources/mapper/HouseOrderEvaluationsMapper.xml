@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Cathouse.mapper.HouseOrderEvaluationsMapper">
+
+    <select id="list" resultMap="BaseResultMap">
+        SELECT
+        hoe.id,
+        hoe.user_id,
+        hoe.house_order_info_id,
+        hoe.text,
+        hoe.score,
+        hoe.create_time,
+        u.username,
+        u.avatar
+        FROM house_order_evaluations hoe
+        LEFT JOIN user u ON u.id = hoe.user_id
+        <where>
+            <if test="userId != null">
+                AND hoe.user_id = #{userId}
+            </if>
+            <if test="houseOrderInfoId != null">
+                AND hoe.house_order_info_id = #{houseOrderInfoId}
+            </if>
+            <if test="houseOrderInfoIds != null and houseOrderInfoIds.size>0">
+                AND hoe.house_order_info_id IN
+                <foreach collection="houseOrderInfoIds" item="houseOrderInfoId" separator="," open="(" close=")" index="index">
+                    #{houseOrderInfoId}
+                </foreach>
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <!--满足分页条件的数据总项-->
+    <select id="listCount" resultType="integer">
+
+        SELECT COUNT(*)
+        FROM house_order_evaluations hoe
+        <where>
+            <if test="userId != null">
+                AND hoe.user_id = #{userId}
+            </if>
+            <if test="houseOrderInfoId != null">
+                AND hoe.house_order_info_id = #{houseOrderInfoId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.Cathouse.project.ValueObject.HouseOrderEvaluationsVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="avatar" property="avatar"/>
+        <result column="house_order_info_id" property="houseOrderInfoId"/>
+        <result column="text" property="text"/>
+        <result column="score" property="score"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+</mapper>

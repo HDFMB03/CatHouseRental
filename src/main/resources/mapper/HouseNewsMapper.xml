@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Cathouse.mapper.HouseNewsMapper">
+
+    <select id="list" resultMap="BaseResultMap">
+        SELECT id,
+        title,
+        cover,
+        summary,
+        create_time,
+        (SELECT COUNT(*) FROM flow_index fi1 WHERE fi1.content_id = hn.id AND fi1.content_type = 'HOUSE_NEWS' AND
+        fi1.type = 1) AS view_number,
+        (SELECT COUNT(*) FROM flow_index fi1 WHERE fi1.content_id = hn.id AND fi1.content_type = 'HOUSE_NEWS' AND
+        fi1.type = 2) AS save_number
+        FROM house_news hn
+        <where>
+            <if test="title != null">
+                AND hn.title LIKE concat('%',#{title},'%')
+            </if>
+            <if test="ids != null and ids.size > 0 ">
+                AND hn.id IN
+                <foreach collection="ids" item="id" separator="," open="(" close=")" index="index">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <!--满足分页条件的数据总项-->
+    <select id="listCount" resultType="integer">
+
+        SELECT COUNT(*)
+        FROM house_news hn
+        <where>
+            <if test="title != null">
+                AND hn.title LIKE concat('%',#{title},'%')
+            </if>
+        </where>
+
+    </select>
+
+    <select id="getIds" resultType="java.lang.Integer">
+        SELECT id FROM house_news
+    </select>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.Cathouse.project.ValueObject.HouseNewsListVO">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="cover" property="cover"/>
+        <result column="summary" property="summary"/>
+        <result column="create_time" property="createTime"/>
+        <result column="view_number" property="viewNumber"/>
+        <result column="save_number" property="saveNumber"/>
+        <result column="view_number" property="viewNumber"/>
+    </resultMap>
+
+</mapper>

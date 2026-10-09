@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Cathouse.mapper.HouseOrderInfoMapper">
+
+    <select id="getIdsByHouseId" resultType="int">
+        SELECT hoi.id
+        FROM house_order_info hoi
+        WHERE hoi.house_id = #{houseId}
+    </select>
+
+    <select id="list" resultMap="BaseResultMap">
+        SELECT hoi.id,
+        hoi.user_id,
+        hoi.house_id,
+        hoi.order_date,
+        hoi.order_time_split,
+        hoi.order_status,
+        hoi.reject_cause,
+        hoi.create_time,
+        hoe.text,
+        u.username,
+        u.avatar,
+        h.name AS house_name,
+        h.cover,
+        h.contract
+        FROM house_order_info hoi
+        LEFT JOIN user u ON u.id = hoi.user_id
+        LEFT JOIN house h ON h.id = hoi.house_id
+        LEFT JOIN house_order_evaluations hoe ON hoe.house_order_info_id = hoi.id
+        <where>
+            <if test="userId != null">
+                AND hoi.user_id = #{userId}
+            </if>
+            <if test="houseId != null">
+                AND hoi.house_id = #{houseId}
+            </if>
+            <if test="orderStatus != null">
+                AND hoi.order_status = #{orderStatus}
+            </if>
+            <if test="orderDate != null">
+                AND hoi.order_date = #{orderDate}
+            </if>
+            <if test="orderTimeSplit != null">
+                AND hoi.order_time_split = #{orderTimeSplit}
+            </if>
+            <if test="houseIds != null and houseIds.size>0">
+                AND hoi.house_id IN
+                <foreach collection="houseIds" item="houseId" separator="," open="(" close=")" index="index">
+                    #{houseId}
+                </foreach>
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <!--满足分页条件的数据总项-->
+    <select id="listCount" resultType="integer">
+
+        SELECT COUNT(*)
+        FROM house_order_info hoi
+        <where>
+            <if test="userId != null">
+                AND hoi.user_id = #{userId}
+            </if>
+            <if test="houseId != null">
+                AND hoi.house_id = #{houseId}
+            </if>
+            <if test="orderStatus != null">
+                AND hoi.order_status = #{orderStatus}
+            </if>
+            <if test="orderDate != null">
+                AND hoi.order_date = #{orderDate}
+            </if>
+            <if test="orderTimeSplit != null">
+                AND hoi.order_time_split = #{orderTimeSplit}
+            </if>
+            <if test="houseIds != null and houseIds.size>0">
+                AND hoi.house_id IN
+                <foreach collection="houseIds" item="houseId" separator="," open="(" close=")" index="index">
+                    #{houseId}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.Cathouse.project.ValueObject.HouseOrderInfoVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="avatar" property="avatar"/>
+        <result column="house_id" property="houseId"/>
+        <result column="house_name" property="houseName"/>
+        <result column="cover" property="cover"/>
+        <result column="order_date" property="orderDate"/>
+        <result column="order_time_split" property="orderTimeSplit"/>
+        <result column="order_status" property="orderStatus"/>
+        <result column="reject_cause" property="rejectCause"/>
+        <result column="create_time" property="createTime"/>
+        <result column="text" property="text"/>
+        <result column="contract" property="contract"/>
+    </resultMap>
+
+</mapper>

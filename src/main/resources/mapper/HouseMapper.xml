@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Cathouse.mapper.HouseMapper">
+
+    <select id="getById" resultMap="HouseVOResultMap">
+        SELECT h.id,
+               h.name,
+               h.detail,
+               h.cover,
+               h.covers,
+               h.area_id,
+               h.community_id,
+               h.sized_id,
+               h.type_id,
+               h.size_number,
+               h.direction_id,
+               h.fitment_status_id,
+               h.rent,
+               h.deposit_method_id,
+               h.is_subway,
+               h.floor,
+               h.subway_line,
+               h.living_facilities,
+               h.rental_type,
+               h.status,
+               h.rental_humen,
+               h.contract,
+               h.create_time,
+               ho.create_time AS order_time,
+               c.name      AS community_name,
+               a.parent_id AS top_area_id,
+               a.name      AS city_area_name,
+               l.id        AS landlord_id,
+               l.idcard    AS landlord_idcard,
+               u.username  AS landlord_name,
+               u.avatar    AS landlord_avatar,
+               u.phone     AS landlord_phone,
+               ou.username AS order_user_name,
+               ou.avatar   AS order_user_avatar,
+               ou.phone    AS order_user_phone
+        FROM house h
+                 LEFT JOIN community c ON c.id = h.community_id
+                 LEFT JOIN area a ON a.id = h.area_id
+                 LEFT JOIN landlord l ON l.id = h.landlord_id
+                 LEFT JOIN user u ON u.id = l.user_id
+                 LEFT JOIN house_order_info ho ON ho.house_id = h.id
+                 LEFT JOIN user ou ON ou.id = ho.user_id
+        WHERE h.id = #{id}
+
+    </select>
+
+    <select id="listCreate" resultMap="HouseListItemResultMap">
+        SELECT h.id,
+               h.create_time
+        FROM house h
+        WHERE h.create_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <select id="list" resultMap="HouseListItemResultMap">
+        SELECT
+        h.id,
+        h.name,
+        h.cover,
+        h.size_number,
+        h.status,
+        h.create_time,
+        c.name AS community_name,
+        a.name AS city_area_name,
+        h.direction_id,
+        h.rental_humen,
+        h.fitment_status_id,
+        h.rent,
+        h.contract,
+        h.deposit_method_id
+        FROM house h
+        LEFT JOIN community c ON c.id = h.community_id
+        LEFT JOIN area a ON a.id = h.area_id
+        <where>
+            <if test="name != null and name != ''">
+                AND h.name LIKE concat('%',#{name},'%')
+            </if>
+            <if test="landlordId != null">
+                AND h.landlord_id = #{landlordId}
+            </if>
+            <if test="areaId != null">
+                AND h.area_id = #{areaId}
+            </if>
+            <if test="communityId != null">
+                AND h.community_id = #{communityId}
+            </if>
+            <if test="typeId != null">
+                AND h.type_id = #{typeId}
+            </if>
+            <if test="minSizeNumber != null and maxSizeNumber != null">
+                AND h.size_number BETWEEN #{minSizeNumber} AND #{maxSizeNumber}
+            </if>
+            <if test="directionId != null">
+                AND h.direction_id = #{directionId}
+            </if>
+            <if test="sizedId != null">
+                AND h.sized_id = #{sizedId}
+            </if>
+            <if test="minRent != null and maxRent != null">
+                AND h.rent BETWEEN #{minRent} AND #{maxRent}
+            </if>
+            <if test="depositMethodId != null">
+                AND h.deposit_method_id = #{depositMethodId}
+            </if>
+            <if test="contract != null">
+                AND h.contract = #{contract}
+            </if>
+            <if test="status != null">
+                AND h.status = #{status}
+            </if>
+            <if test="isSubway != null">
+                AND h.is_subway = #{isSubway}
+            </if>
+            <if test="rentalHumen != null">
+                AND h.rental_humen = #{rentalHumen}
+            </if>
+            <if test="fitmentStatusId != null">
+                AND h.fitment_status_id = #{fitmentStatusId}
+            </if>
+            <if test="rentalType != null">
+                AND h.rental_type = #{rentalType}
+            </if>
+            <if test="ids != null and ids.size > 0 ">
+                AND h.id IN
+                <foreach collection="ids" item="id" separator="," open="(" close=")" index="index">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <select id="flowIndexList" resultType="com.Cathouse.project.ValueObject.HouseFlowIndexVO">
+        SELECT
+        h.id ,
+        h.name AS houseName,
+        h.cover AS houseCover,
+        h.create_time AS createTime,
+        (SELECT COUNT(*) FROM flow_index fi1 WHERE fi1.content_type = 'HOUSE_INFO' AND fi1.content_id = h.id AND
+        fi1.type = 4) AS showNumber,
+        (SELECT COUNT(*) FROM flow_index fi2 WHERE fi2.content_type = 'HOUSE_INFO' AND fi2.content_id = h.id AND
+        fi2.type = 1) AS viewNumber,
+        (SELECT COUNT(*) FROM flow_index fi3 WHERE fi3.content_type = 'HOUSE_INFO' AND fi3.content_id = h.id AND
+        fi3.type = 2) AS saveNumber,
+        (SELECT COUNT(*) FROM evaluations e WHERE e.content_type = 'HOUSE_INFO' AND e.content_id = h.id) AS
+        evaluationsNumber
+        FROM house h
+        <where>
+            <if test="name != null and name != ''">
+                AND h.name LIKE concat('%',#{name},'%')
+            </if>
+            <if test="landlordId != null">
+                AND h.landlord_id = #{landlordId}
+            </if>
+            <if test="areaId != null">
+                AND h.area_id = #{areaId}
+            </if>
+            <if test="communityId != null">
+                AND h.community_id = #{communityId}
+            </if>
+            <if test="typeId != null">
+                AND h.type_id = #{typeId}
+            </if>
+            <if test="minSizeNumber != null and maxSizeNumber != null">
+                AND h.size_number BETWEEN #{minSizeNumber} AND #{maxSizeNumber}
+            </if>
+            <if test="directionId != null">
+                AND h.direction_id = #{directionId}
+            </if>
+            <if test="sizedId != null">
+                AND h.sized_id = #{sizedId}
+            </if>
+            <if test="minRent != null and maxRent != null">
+                AND h.rent BETWEEN #{minRent} AND #{maxRent}
+            </if>
+            <if test="depositMethodId != null">
+                AND h.deposit_method_id = #{depositMethodId}
+            </if>
+            <if test="status != null">
+                AND h.status = #{status}
+            </if>
+            <if test="isSubway != null">
+                AND h.is_subway = #{isSubway}
+            </if>
+            <if test="rentalHumen != null">
+                AND h.rental_humen = #{rentalHumen}
+            </if>
+            <if test="fitmentStatusId != null">
+                AND h.fitment_status_id = #{fitmentStatusId}
+            </if>
+            <if test="rentalType != null">
+                AND h.rental_type = #{rentalType}
+            </if>
+            <if test="ids != null and ids.size > 0 ">
+                AND h.id IN
+                <foreach collection="ids" item="id" separator="," open="(" close=")" index="index">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <select id="listCount" resultType="integer">
+        SELECT COUNT(*)
+        FROM house h
+        <where>
+            <if test="name != null and name != ''">
+                AND h.name LIKE concat('%',#{name},'%')
+            </if>
+            <if test="landlordId != null">
+                AND h.landlord_id = #{landlordId}
+            </if>
+            <if test="areaId != null">
+                AND h.area_id = #{areaId}
+            </if>
+            <if test="communityId != null">
+                AND h.community_id = #{communityId}
+            </if>
+            <if test="typeId != null">
+                AND h.type_id = #{typeId}
+            </if>
+            <if test="minSizeNumber != null and maxSizeNumber != null">
+                AND h.size_number BETWEEN #{minSizeNumber} AND #{maxSizeNumber}
+            </if>
+            <if test="directionId != null">
+                AND h.direction_id = #{directionId}
+            </if>
+            <if test="sizedId != null">
+                AND h.sized_id = #{sizedId}
+            </if>
+            <if test="minRent != null and maxRent != null">
+                AND h.rent BETWEEN #{minRent} AND #{maxRent}
+            </if>
+            <if test="contract != null">
+                AND h.contract = #{contract}
+            </if>
+            <if test="depositMethodId != null">
+                AND h.deposit_method_id = #{depositMethodId}
+            </if>
+            <if test="status != null">
+                AND h.status = #{status}
+            </if>
+            <if test="isSubway != null">
+                AND h.is_subway = #{isSubway}
+            </if>
+            <if test="rentalHumen != null">
+                AND h.rental_humen = #{rentalHumen}
+            </if>
+            <if test="fitmentStatusId != null">
+                AND h.fitment_status_id = #{fitmentStatusId}
+            </if>
+            <if test="rentalType != null">
+                AND h.rental_type = #{rentalType}
+            </if>
+            <if test="ids != null and ids.size > 0 ">
+                AND h.id IN
+                <foreach collection="ids" item="id" separator="," open="(" close=")" index="index">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+
+    <select id="selectIdsByLandlordId" resultType="java.lang.Integer">
+
+        SELECT h.id
+        FROM house h
+        WHERE h.landlord_id = #{landlordId}
+
+    </select>
+
+    <select id="cityHouseRange" resultType="com.Cathouse.project.ValueObject.ChartVO">
+        SELECT a.name,
+               COUNT(h.id) AS count
+        FROM house h
+                 LEFT JOIN area a ON a.id = h.area_id
+        GROUP BY a.name
+        LIMIT #{limitCount}
+    </select>
+
+    <select id="getIds" resultType="java.lang.Integer">
+
+        SELECT id FROM house
+
+    </select>
+
+
+    <resultMap id="HouseVOResultMap" type="com.Cathouse.project.ValueObject.HouseVO">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="landlord_id" property="landlordId"/>
+        <result column="landlord_idcard" property="idcard"/>
+        <result column="landlord_name" property="landlordName"/>
+        <result column="landlord_avatar" property="landlordAvatar"/>
+        <result column="landlord_phone" property="phone"/>
+        <result column="top_area_id" property="topAreaId"/>
+        <result column="area_id" property="areaId"/>
+        <result column="city_area_name" property="cityAreaName"/>
+        <result column="community_id" property="communityId"/>
+        <result column="community_name" property="communityName"/>
+        <result column="detail" property="detail"/>
+        <result column="cover" property="cover"/>
+        <result column="covers" property="covers"/>
+        <result column="status" property="status"/>
+        <result column="type_id" property="typeId"/>
+        <result column="floor" property="floor"/>
+        <result column="sized_id" property="sizedId"/>
+        <result column="size_number" property="sizeNumber"/>
+        <result column="direction_id" property="directionId"/>
+        <result column="fitment_status_id" property="fitmentStatusId"/>
+        <result column="rent" property="rent"/>
+        <result column="contract" property="contract"/>
+        <result column="is_subway" property="isSubway"/>
+        <result column="rental_humen" property="rentalHumen"/>
+        <result column="subway_line" property="subwayLine"/>
+        <result column="rental_type" property="rentalType"/>
+        <result column="living_facilities" property="livingFacilities"/>
+        <result column="create_time" property="createTime"/>
+        <result column="order_time" property="orderTime"/>
+        <result column="order_user_name" property="orderUserName"/>
+        <result column="order_user_avatar" property="orderUserAvatar"/>
+        <result column="order_user_phone" property="orderUserPhone"/>
+    </resultMap>
+
+    <resultMap id="HouseListItemResultMap" type="com.Cathouse.project.ValueObject.HouseListItemVO">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="cover" property="cover"/>
+        <result column="status" property="status"/>
+        <result column="size_number" property="sizeNumber"/>
+        <result column="community_name" property="communityName"/>
+        <result column="city_area_name" property="cityAreaName"/>
+        <result column="direction_id" property="directionId"/>
+        <result column="direction_name" property="directionName"/>
+        <result column="fitment_status_id" property="fitmentStatusId"/>
+        <result column="fitment_status_name" property="fitmentStatusName"/>
+        <result column="rent" property="rent"/>
+        <result column="contract" property="contract"/>
+        <result column="rental_humen" property="rentalHumen"/>
+        <result column="deposit_method_id" property="depositMethodId"/>
+        <result column="deposit_method_name" property="depositMethodName"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+</mapper>

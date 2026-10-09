@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Cathouse.mapper.UserAreaMapper">
+
+    <select id="list" resultMap="BaseResultMap">
+        SELECT ua.* FROM user_area ua
+        <where>
+            <if test="userId != null">
+                AND ua.user_id = #{userId}
+            </if>
+            <if test="areaId != null">
+                AND ua.area_id = #{areaId}
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <!--满足分页条件的数据总项-->
+    <select id="listCount" resultType="integer">
+
+        SELECT COUNT(*)
+        FROM user_area ua
+        <where>
+            <if test="userId != null">
+                AND ua.user_id = #{userId}
+            </if>
+            <if test="areaId != null">
+                AND ua.area_id = #{areaId}
+            </if>
+        </where>
+    </select>
+
+    <select id="listUser" resultType="com.Cathouse.project.ValueObject.UserAreaVO">
+        SELECT ua.id,
+               ua.area_id AS cityAreaId,
+               a1.id      AS topAreaId,
+               a1.name    AS topAreaName,
+               a2.name    AS cityAreaName
+        FROM `user_area` ua
+                 LEFT JOIN area a2 ON a2.id = ua.area_id
+                 LEFT JOIN area a1 ON a1.id = a2.parent_id
+        WHERE ua.user_id = #{userId}
+    </select>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.Cathouse.project.entity.UserArea">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="area_id" property="areaId"/>
+    </resultMap>
+
+</mapper>

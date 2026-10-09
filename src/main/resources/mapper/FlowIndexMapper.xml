@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Cathouse.mapper.FlowIndexMapper">
+
+
+    <select id="list" resultMap="BaseResultMap">
+        SELECT fi.id, fi.type, fi.times, fi.content_type, fi.content_id, fi.user_id, fi.create_time
+        FROM flow_index fi
+        <where>
+            <if test="type != null">
+                AND fi.type = #{type}
+            </if>
+            <if test="userId != null">
+                AND fi.user_id = #{userId}
+            </if>
+            <if test="contentType != null and contentType != ''">
+                AND fi.content_type = #{contentType}
+            </if>
+            <if test="contentId != null">
+                AND fi.content_id = #{contentId}
+            </if>
+        </where>
+        <if test="current != null and size != null">
+            LIMIT #{current},#{size}
+        </if>
+    </select>
+
+    <!--满足分页条件的数据总项-->
+    <select id="listCount" resultType="integer">
+
+        SELECT COUNT(*)
+        FROM flow_index fi
+        <where>
+            <if test="type != null">
+                AND fi.type = #{type}
+            </if>
+            <if test="userId != null">
+                AND fi.user_id = #{userId}
+            </if>
+            <if test="contentType != null and contentType != ''">
+                AND fi.content_type = #{contentType}
+            </if>
+            <if test="contentId != null">
+                AND fi.content_id = #{contentId}
+            </if>
+        </where>
+
+    </select>
+
+    <select id="getScores" resultType="com.Cathouse.project.ValueObject.ScoreVO">
+        SELECT user_id        as userId,
+               content_id     as contentId,
+               LEAST(5,
+                     (total_views * 0.35 + total_collects * 0.65 +
+                      CASE
+                          WHEN total_duration &lt; 6000 THEN 0
+                          WHEN total_duration &lt; 20000 THEN 0.5
+                          WHEN total_duration &lt; 60000 THEN 1
+                          ELSE 1.5 -- 分值减半
+                          END
+                         ) / GREATEST(1, (total_views + total_collects)) * 5
+               )              AS score
+        FROM (SELECT user_id,
+                     content_id,
+                     SUM(CASE WHEN type = 1 THEN 1 ELSE 0 END)     AS total_views,
+                     SUM(CASE WHEN type = 2 THEN 1 ELSE 0 END)     AS total_collects,
+                     SUM(CASE WHEN type = 3 THEN times ELSE 0 END) AS total_duration
+              FROM flow_index
+              WHERE type IN (1, 2, 3)
+                AND content_type = #{contentType}
+              GROUP BY user_id, content_id, content_type
+              HAVING total_views > 0
+                  OR total_collects > 0) AS aggregated_data
+        ORDER BY score DESC
+    </select>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.Cathouse.project.entity.FlowIndex">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="type" property="type"/>
+        <result column="times" property="times"/>
+        <result column="content_type" property="contentType"/>
+        <result column="content_id" property="contentId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+</mapper>
